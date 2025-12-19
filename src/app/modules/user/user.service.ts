@@ -1,20 +1,27 @@
 import mongoose from "mongoose";
 import { USER_ROLE } from "../../interface/constant";
 import { TStudent } from "../student/student.interface";
-import { TUser } from "./user.interface";
+import { TUser, UserRole } from "./user.interface";
 import { User } from "./user.model";
 import AppError from "../../error/appError";
 import { StatusCodes } from "http-status-codes";
 import { Student } from "../student/student.model";
 
-const createStudentIntoDB = async (password: string, payload: TStudent) => {
+
+type TClientInfo =
+  Pick<TUser["clientInfo"], "device" | "browser" | "ipAddress"> &
+  Partial<Omit<TUser["clientInfo"], "device" | "browser" | "ipAddress">>;
+
+
+const createStudentIntoDB = async (password: string, payload: TStudent,  clientInfoData: TClientInfo) => {
   const userData: Partial<TUser> = {};
 
   userData.id = payload?.id;
   userData.password = password;
   userData.email = payload?.email;
-  userData.role = USER_ROLE.student;
+  userData.role = UserRole?.STUDENT;
   userData.needsPasswordChange = false;
+  userData.clientInfo = clientInfoData ;
 
   const isUser = await User.isUserExist(payload?.id);
 
@@ -57,7 +64,7 @@ const createStudentIntoDB = async (password: string, payload: TStudent) => {
   }
 };
 
-const createTeacherIntoDB = async () => {};
+const createInstructorIntoDB = async () => {};
 
 const createAdminIntoDB = async () => {};
 
@@ -71,7 +78,7 @@ const updateUserStatus = async () => {};
 
 export const userService = {
   createStudentIntoDB,
-  createTeacherIntoDB,
+  createInstructorIntoDB,
   createAdminIntoDB,
   getAllUser,
   myProfile,

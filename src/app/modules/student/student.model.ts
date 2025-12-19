@@ -96,6 +96,7 @@ const studentSchema = new Schema<TStudent>(
     },
 
     diplomaRoll: { type: Number },
+    diplomaRegistrationNo: { type: Number },
 
     admissionSemester: {
       type: String,

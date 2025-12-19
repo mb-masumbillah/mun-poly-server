@@ -16,8 +16,7 @@ export type TAcademicTechnology =
   | "Electronics Technology"
   | "Mechanical Technology"
   | "Civil Technology"
-  | "IPCT Technology"
-
+  | "IPCT Technology";
 
 export type TGuardian = {
   fatherName: string;
@@ -53,6 +52,7 @@ export type TStudent = {
   profileImg?: string;
   secondarySchool: TSecondarySchool;
   diplomaRoll?: number;
+  diplomaRegistrationNo?: number;
   admissionSemester: TSemester;
   academicTechnology: TAcademicTechnology;
   shift: string;

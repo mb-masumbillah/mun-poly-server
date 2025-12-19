@@ -48,6 +48,38 @@ const userSchema = new Schema<TUser, UserModel>(
       type: Boolean,
       default: false,
     },
+    clientInfo: {
+      device: {
+        type: String,
+        enum: ["pc", "mobile"],
+        required: true,
+      },
+      browser: {
+        type: String,
+        required: true,
+      },
+      ipAddress: {
+        type: String,
+        required: true,
+      },
+      pcName: {
+        type: String,
+      },
+      os: {
+        type: String,
+      },
+      userAgent: {
+        type: String,
+      },
+    },
+    lastLogin: {
+      type: Date,
+      default: Date.now(),
+    },
+    otpToken: {
+      type: String,
+      default: null,
+    },
   },
   {
     timestamps: true,
@@ -67,8 +99,34 @@ userSchema.post("save", function (doc, next) {
   next();
 });
 
-userSchema.statics.isUserExist = async function (id: string) {
-  return await User.findOne({ id }).select("+password");
+userSchema.statics.isUserExist = async function (value: string) {
+  let query = {};
+
+  if (value.includes("@")) {
+    query = { email: value };
+  } else if (/^\d+$/.test(value)) {
+    query = { id: value };
+  } else {
+    throw new Error("Invalid roll or email");
+  }
+  return await this.findOne(query).select("+password");
 };
+
+userSchema.statics.isPasswordMatched = async function (
+  plainTextPassword: string,
+  hashedPassword: string
+) {
+  return await bcrypt.compare(plainTextPassword, hashedPassword);
+};
+
+userSchema.statics.isJWTIssuedBeforePasswordChanged = function (
+  passwordChangedTimestamp: Date,
+  jwtIssuedTimestamp: number,
+) {
+  const passwordChangedTime =
+    new Date(passwordChangedTimestamp).getTime() / 1000;
+  return passwordChangedTime > jwtIssuedTimestamp;
+};
+
 
 export const User = model<TUser, UserModel>("User", userSchema);

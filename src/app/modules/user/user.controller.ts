@@ -4,9 +4,11 @@ import sendResponse from "../../utils/sendResponse";
 import { userService } from "./user.service";
 
 const createStudent = catchAsync(async (req, res) => {
-  const { password, student: studentData } = req.body;
 
-  const result = await userService.createStudentIntoDB(password, studentData);
+  const { password, student: studentData, clientInfo } = req.body;
+
+
+  const result = await userService.createStudentIntoDB(password, studentData, clientInfo);
 
   sendResponse(res, {
     statusCode: StatusCodes.OK,
@@ -16,7 +18,17 @@ const createStudent = catchAsync(async (req, res) => {
   });
 });
 
-const createTeacher = catchAsync(async (req, res) => {});
+const createInstructor = catchAsync(async (req, res) => {
+  const { password, instructor: instructorData } = req.body;
+  const result = await userService.createInstructorIntoDB();
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: "Instructor create success",
+    data: result,
+  });
+});
 
 const createAdmin = catchAsync(async (req, res) => {});
 
@@ -30,7 +42,7 @@ const updateUserStatus = catchAsync(async (req, res) => {});
 
 export const userController = {
   createStudent,
-  createTeacher,
+  createInstructor,
   createAdmin,
   getAllUser,
   myProfile,

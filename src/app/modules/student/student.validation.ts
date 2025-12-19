@@ -54,7 +54,7 @@ export const studentValidationSchema = z.object({
       .max(64, "Password cannot exceed 64 characters"),
 
     student: z.object({
-      id: z.number(),
+      id: z.string(),
       fullName: z.string().min(1, "Full name is required"),
 
       // ✅ enum consistent
