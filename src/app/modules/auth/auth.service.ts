@@ -7,6 +7,8 @@ import config from "../../config";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { generateOtp } from "../../utils/generateOtp";
+import { EmailHelper } from "../../utils/emailHelper";
+import { ClientSession } from "mongoose";
 
 const loginUser = async (payload: TLoginUser) => {
   const user = await User.isUserExist(payload?.idOrEmail);
@@ -169,11 +171,129 @@ const forgotPassword = async ({ email }: { email: string }) => {
     throw new AppError(StatusCodes.FORBIDDEN, "This user is blocked ! !");
   }
 
-  const otp = generateOtp()
+  const otp = generateOtp();
 
-  const otpToken = jwt.sign({otp, email}, config.)
+  const otpToken = jwt.sign({ otp, email }, config.jwt_otp_secret as string, {
+    expiresIn: "5m",
+  });
+
+  await User.updateOne({ email }, { otpToken });
+
+  try {
+    const emailContent = await EmailHelper.createEmailContent(
+      { otpCode: otp },
+      "forgotPassword"
+    );
+
+    await EmailHelper.sendEmail(email, emailContent, "Reset Password OTP");
+  } catch (error) {
+    await User.updateOne({ email }, { $unset: { otpToken: 1 } });
+
+    throw new AppError(
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      "Failed to send OTP email. Please try again later."
+    );
+  }
+};
+
+const verifyOTP = async ({ email, otp }: { email: string; otp: string }) => {
+  const user = await User.isUserExist(email);
+
+  if (!user) {
+    throw new AppError(StatusCodes.NOT_FOUND, "User not found");
+  }
+
+  if (!user.otpToken || user.otpToken === "") {
+    throw new AppError(
+      StatusCodes.BAD_REQUEST,
+      "No OTP token found. Please request a new password reset OTP."
+    );
+  }
+
+  const decodedOtpData = verifyToken(
+    user.otpToken as string,
+    config.jwt_otp_secret as string
+  );
+
+  if (!decodedOtpData) {
+    throw new AppError(StatusCodes.FORBIDDEN, "OTP has expired or is invalid");
+  }
+
+  if (decodedOtpData.otp !== otp) {
+    throw new AppError(StatusCodes.FORBIDDEN, "Invalid OTP");
+  }
+
+  // user.otpToken = null;
+  // await user.save();
+
+  await User.updateOne({ email }, { $unset: { otpToken: 1 } });
+
+  const resetToken = jwt.sign(
+    { email },
+    config.jwt_pass_reset_secret as string,
+    {
+      expiresIn: config.jwt_pass_reset_expires_in,
+    }
+  );
+
+  return {
+    resetToken,
+  };
+};
+
+const resetPassword = async ({
+  token,
+  newPassword,
+}: {
+  token: string;
+  newPassword: string;
+}) => {
+
+  // console.log(token, newPassword)
+
+  const session: ClientSession = await User.startSession();
+
+  try {
+    session.startTransaction();
+
+    const decodedData = verifyToken(
+      token as string,
+      config.jwt_pass_reset_secret as string
+    );
 
 
+    const user = await User.findOne({
+      email: decodedData.email,
+      isDeleted: false,
+    }).session(session);
+
+    console.log(user)
+
+    if (!user) {
+      throw new AppError(StatusCodes.NOT_FOUND, "User not found");
+    }
+
+    const hashedPassword = await bcrypt.hash(
+      String(newPassword),
+      Number(config.bcrypt_salt_rounds)
+    );
+
+    await User.updateOne(
+      { email: user.email },
+      { password: hashedPassword }
+    ).session(session);
+
+    await session.commitTransaction();
+
+    return {
+      message: "Password changed successfully",
+    };
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    session.endSession();
+  }
 };
 
 export const AuthService = {
@@ -181,4 +301,6 @@ export const AuthService = {
   refreshToken,
   changePassword,
   forgotPassword,
+  resetPassword,
+  verifyOTP,
 };
