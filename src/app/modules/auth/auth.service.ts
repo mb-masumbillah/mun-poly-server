@@ -11,7 +11,7 @@ import { EmailHelper } from "../../utils/emailHelper";
 import { ClientSession } from "mongoose";
 
 const loginUser = async (payload: TLoginUser) => {
-  console.log(payload)
+  console.log(payload);
   const user = await User.isUserExist(payload?.rollOrEmail);
 
   if (!user) {
@@ -25,7 +25,6 @@ const loginUser = async (payload: TLoginUser) => {
   if (user?.status === "pending") {
     throw new AppError(StatusCodes.FORBIDDEN, "This user is Pending !");
   }
-
 
   if (!(await User.isPasswordMatched(payload?.password, user?.password))) {
     throw new AppError(StatusCodes.FORBIDDEN, "Password do not matched");
@@ -78,10 +77,6 @@ const changePassword = async (
     throw new AppError(StatusCodes.FORBIDDEN, "This user is deleted !");
   }
 
-  if (user?.status === "blocked") {
-    throw new AppError(StatusCodes.FORBIDDEN, "This user is blocked ! !");
-  }
-
   if (!(await User.isPasswordMatched(payload.oldPassword, user?.password))) {
     throw new AppError(StatusCodes.FORBIDDEN, "Password do not matched");
   }
@@ -128,10 +123,6 @@ const refreshToken = async (token: string) => {
     throw new AppError(StatusCodes.FORBIDDEN, "This user is deleted !");
   }
 
-  if (user?.status === "blocked") {
-    throw new AppError(StatusCodes.FORBIDDEN, "This user is blocked ! !");
-  }
-
   if (
     user.passwordChangedAt &&
     User.isJWTIssuedBeforePasswordChanged(user.passwordChangedAt, iat as number)
@@ -140,7 +131,7 @@ const refreshToken = async (token: string) => {
   }
 
   const jwtPayload: IJwtPayload = {
-    userId: user?.id,
+    userId: user?.roll,
     role: user?.role,
     email: user?.email,
     status: user?.status,
@@ -167,10 +158,6 @@ const forgotPassword = async ({ email }: { email: string }) => {
 
   if (user?.isDeleted) {
     throw new AppError(StatusCodes.FORBIDDEN, "This user is deleted !");
-  }
-
-  if (user?.status === "blocked") {
-    throw new AppError(StatusCodes.FORBIDDEN, "This user is blocked ! !");
   }
 
   const otp = generateOtp();
@@ -233,10 +220,8 @@ const verifyOTP = async ({ email, otp }: { email: string; otp: string }) => {
   const resetToken = jwt.sign(
     { email },
     config.jwt_pass_reset_secret as string,
-    {
-      expiresIn: config.jwt_pass_reset_expires_in,
-    }
-  );  
+    { expiresIn: "15m" }
+  );
 
   return {
     resetToken,
@@ -250,7 +235,6 @@ const resetPassword = async ({
   token: string;
   newPassword: string;
 }) => {
-
   // console.log(token, newPassword)
 
   const session: ClientSession = await User.startSession();
@@ -263,13 +247,12 @@ const resetPassword = async ({
       config.jwt_pass_reset_secret as string
     );
 
-
     const user = await User.findOne({
       email: decodedData.email,
       isDeleted: false,
     }).session(session);
 
-    console.log(user)
+    console.log(user);
 
     if (!user) {
       throw new AppError(StatusCodes.NOT_FOUND, "User not found");

@@ -1,5 +1,5 @@
 import { StatusCodes } from "http-status-codes";
-import { TErrorSource } from "../interface/error";
+import { TErrorSources } from "../interface/error";
 
 const handleDuplicateError = (error: any) => {
   const statusCode = StatusCodes.BAD_REQUEST;
@@ -7,7 +7,7 @@ const handleDuplicateError = (error: any) => {
   const match = error.message.match(/"([^"]*)"/);
   const extractedMessage = match && match[1];
 
-  const errorSources: TErrorSource = [
+  const errorSources: TErrorSources = [
     {
       path: "",
       message: `${extractedMessage} is already exists`,

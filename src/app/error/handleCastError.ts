@@ -1,6 +1,6 @@
 import { StatusCodes } from "http-status-codes";
 import mongoose from "mongoose";
-import { TErrorSource, TGenericErrorResponse } from "../interface/error";
+import {  TErrorSources, TGenericErrorResponse } from "../interface/error";
 
 const handleCastError = (
   error: mongoose.Error.CastError
@@ -8,7 +8,7 @@ const handleCastError = (
 
   const statusCode = StatusCodes.BAD_REQUEST;
   
-  const errorSources: TErrorSource = [
+  const errorSources: TErrorSources = [
     {
       path: error.path,
       message: error.message,
