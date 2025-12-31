@@ -14,7 +14,7 @@ app.use(express.json());
 // app.use(express.urlencoded({ extended: true }));
 
 // route
-app.use('/', router);
+app.use(router);
 
 
 
