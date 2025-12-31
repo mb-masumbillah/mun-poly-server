@@ -1,50 +1,33 @@
-import { v2 as cloudinary } from 'cloudinary';
-import multer from 'multer';
-import fs from 'fs';
-import config from '../config';
+import multer from "multer";
+import { v2 as cloudinary } from "cloudinary";
+import config from "../config";
 
-// Configuration
+// ----------------- Cloudinary Config -----------------
 cloudinary.config({
   cloud_name: config.cloudinary_cloud_name,
   api_key: config.api_key,
   api_secret: config.api_secret,
 });
 
-export const sendImageToCloudinary = (
-  imageName: string,
-  path: string,
-) => {
-  // কোনো synchronous কে asynchronous করার system new Promise দিয়ে 
-  return new Promise((resolve, reject) => {
-    cloudinary.uploader.upload(
-      path,
-      { public_id: imageName },
-      function (error, result) {
-        if (error) {
-          reject(error);
-        }
+// ----------------- Multer Setup -----------------
+const multerStorage = multer.memoryStorage(); // memory storage for serverless
+export const upload = multer({ storage: multerStorage });
+
+// ----------------- Cloudinary Upload Function -----------------
+/**
+ * Upload file buffer to Cloudinary
+ * @param imageName string - public_id in Cloudinary
+ * @param fileBuffer Buffer - from multer memoryStorage
+ */
+export const uploadToCloudinary = (imageName: string, fileBuffer: Buffer) => {
+  return new Promise<any>((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder: "users", public_id: imageName },
+      (error, result) => {
+        if (error) return reject(error);
         resolve(result);
-        // delete a file asynchronously
-        fs.unlink(path, (err) => {
-          if (err) {
-            console.log(err);
-          } else {
-            console.log('File is deleted.');
-          }
-        });
-      },
+      }
     );
+    stream.end(fileBuffer); // push buffer to Cloudinary
   });
 };
-
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, process.cwd() + '/uploads/');
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, file.fieldname + '-' + uniqueSuffix);
-  },
-});
-
-export const upload = multer({ storage: storage });

@@ -6,7 +6,8 @@ import { User } from "./user.model";
 import AppError from "../../error/appError";
 import { StatusCodes } from "http-status-codes";
 import { Student } from "../student/student.model";
-import { sendImageToCloudinary } from "../../utils/sendImageToCloudinary";
+import { uploadToCloudinary } from "../../utils/sendImageToCloudinary";
+
 
 type TClientInfo = Pick<
   TUser["clientInfo"],
@@ -40,13 +41,9 @@ const createStudentIntoDB = async (
   try {
     session.startTransaction();
 
-    if (file) {
-      const imageName = `${userData.roll}${payload?.fullName}`;
-      const path = file?.path;
-
-      //send image to cloudinary
-      const { secure_url }: any = await sendImageToCloudinary(imageName, path);
-      payload.image = secure_url as string;
+     if (file) {
+      const { secure_url }: any = await uploadToCloudinary(`${payload.roll}-${payload.fullName}`, file.buffer);
+      payload.image = secure_url;
     }
 
     // create a user (transaction-1)
@@ -96,11 +93,9 @@ const getMe = async (email: string, roll: string, role: string) => {
 };
 
 const changeStatus = async (roll: string, payload: { status: string }) => {
+  console.log(roll, payload);
 
-  console.log(roll, payload)
-
-
-  const result = await User.findOneAndUpdate({roll}, payload, {
+  const result = await User.findOneAndUpdate({ roll }, payload, {
     new: true,
   });
   return result;
@@ -118,5 +113,5 @@ export const userService = {
   getMe,
   updateProfile,
   updateUserStatus,
-  changeStatus
+  changeStatus,
 };
