@@ -8,13 +8,14 @@ import globalErrorHandler from "./app/middleware/globalErrorHandler";
 const app: Application = express();
 
 // Middleware setup
-app.use(cors());
+app.use(cors({ origin: "*", credentials: true }));
 app.use(cookieParser());
 app.use(express.json());
 // app.use(express.urlencoded({ extended: true }));
 
 // route
-app.use('/api',router)
+app.use('/', router);
+
 
 
 // test
