@@ -236,7 +236,7 @@ const verifyOTP = async ({ email, otp }: { email: string; otp: string }) => {
     {
       expiresIn: config.jwt_pass_reset_expires_in,
     }
-  );
+  );  
 
   return {
     resetToken,
