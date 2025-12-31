@@ -1,12 +1,13 @@
 import { StatusCodes } from "http-status-codes";
 import AppError from "../error/appError";
-import { UserRole } from "../modules/user/user.interface";
 import catchAsync from "../utils/catchAsync";
 import jwt, { JwtPayload, TokenExpiredError } from "jsonwebtoken";
 import config from "../config";
 import { User } from "../modules/user/user.model";
+import { TuserRole } from "../modules/user/user.interface";
 
-const auth = (...requiredRoles: UserRole[]) => {
+
+const auth = (...requiredRoles: TuserRole[]) => {
   return catchAsync(async (req, res, next) => {
     const token = req.headers.authorization;
 

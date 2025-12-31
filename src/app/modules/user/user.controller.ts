@@ -4,11 +4,15 @@ import sendResponse from "../../utils/sendResponse";
 import { userService } from "./user.service";
 
 const createStudent = catchAsync(async (req, res) => {
-
   const { password, student: studentData, clientInfo } = req.body;
 
 
-  const result = await userService.createStudentIntoDB(password, studentData, clientInfo);
+  const result = await userService.createStudentIntoDB(
+    req.file,
+    password,
+    studentData,
+    clientInfo
+  );
 
   sendResponse(res, {
     statusCode: StatusCodes.OK,
@@ -34,7 +38,30 @@ const createAdmin = catchAsync(async (req, res) => {});
 
 const getAllUser = catchAsync(async (req, res) => {});
 
-const myProfile = catchAsync(async (req, res) => {});
+const getMe = catchAsync(async (req, res) => {
+  const { email, roll, role } = req.user;
+
+  const result = await userService.getMe(email, roll, role);
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: "User is retrieved succesfully",
+    data: result,
+  });
+});
+const changeStatus = catchAsync(async (req, res) => {
+  const roll = req.params.roll;
+
+  const result = await userService.changeStatus(roll, req.body);
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Status is updated succesfully',
+    data: result,
+  });
+});
 
 const updateProfile = catchAsync(async (req, res) => {});
 
@@ -45,7 +72,8 @@ export const userController = {
   createInstructor,
   createAdmin,
   getAllUser,
-  myProfile,
+  getMe,
   updateProfile,
   updateUserStatus,
+  changeStatus
 };

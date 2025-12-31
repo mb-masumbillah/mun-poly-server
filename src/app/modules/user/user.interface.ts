@@ -1,4 +1,5 @@
 import { Model, Types } from "mongoose";
+import { USER_ROLE } from "../../interface/constant";
 
 export enum UserRole {
   SUPER_ADMIN = "superAdmin",
@@ -10,12 +11,12 @@ export enum UserRole {
 
 export interface TUser {
   _id: Types.ObjectId;
-  id: string;
+  roll: string;
   password: string;
   email: string;
   needsPasswordChange?: boolean;
   role: UserRole;
-  status: "in-progress" | "blocked";
+  status: "pending" | "approved";
   passwordChangedAt?: Date;
   clientInfo: {
     device: "pc" | "mobile"; // Device type
@@ -45,3 +46,6 @@ export interface UserModel extends Model<TUser> {
     jwtIssuedTimestamp: number,
   ): boolean;
 }
+
+
+export type TuserRole = keyof typeof USER_ROLE;

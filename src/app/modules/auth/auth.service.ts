@@ -11,7 +11,8 @@ import { EmailHelper } from "../../utils/emailHelper";
 import { ClientSession } from "mongoose";
 
 const loginUser = async (payload: TLoginUser) => {
-  const user = await User.isUserExist(payload?.idOrEmail);
+  console.log(payload)
+  const user = await User.isUserExist(payload?.rollOrEmail);
 
   if (!user) {
     throw new AppError(StatusCodes.BAD_REQUEST, "This user is not found!");
@@ -21,16 +22,17 @@ const loginUser = async (payload: TLoginUser) => {
     throw new AppError(StatusCodes.FORBIDDEN, "This user is deleted !");
   }
 
-  if (user?.status === "blocked") {
-    throw new AppError(StatusCodes.FORBIDDEN, "This user is blocked ! !");
+  if (user?.status === "pending") {
+    throw new AppError(StatusCodes.FORBIDDEN, "This user is Pending !");
   }
+
 
   if (!(await User.isPasswordMatched(payload?.password, user?.password))) {
     throw new AppError(StatusCodes.FORBIDDEN, "Password do not matched");
   }
 
   const jwtPayload: IJwtPayload = {
-    userId: user?.id,
+    userId: user?.roll,
     role: user?.role,
     email: user?.email,
     status: user?.status,

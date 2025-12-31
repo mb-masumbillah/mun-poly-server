@@ -1,7 +1,7 @@
 import { UserRole } from "../user/user.interface";
 
 export type TLoginUser = {
-  idOrEmail: string;
+  rollOrEmail: string;
   password: string;
   clientInfo: {
     device: "pc" | "mobile"; // Device type
@@ -17,6 +17,6 @@ export interface IJwtPayload {
   userId: string;
   role: UserRole;
   email: string;
-  status: "in-progress" | "blocked";
+  status: "pending" | "approved";
   isDeleted: boolean;
 }

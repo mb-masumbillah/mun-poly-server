@@ -6,24 +6,30 @@ import { User } from "./user.model";
 import AppError from "../../error/appError";
 import { StatusCodes } from "http-status-codes";
 import { Student } from "../student/student.model";
+import { sendImageToCloudinary } from "../../utils/sendImageToCloudinary";
 
-
-type TClientInfo =
-  Pick<TUser["clientInfo"], "device" | "browser" | "ipAddress"> &
+type TClientInfo = Pick<
+  TUser["clientInfo"],
+  "device" | "browser" | "ipAddress"
+> &
   Partial<Omit<TUser["clientInfo"], "device" | "browser" | "ipAddress">>;
 
-
-const createStudentIntoDB = async (password: string, payload: TStudent,  clientInfoData: TClientInfo) => {
+const createStudentIntoDB = async (
+  file: any,
+  password: string,
+  payload: TStudent,
+  clientInfoData: TClientInfo
+) => {
   const userData: Partial<TUser> = {};
 
-  userData.id = payload?.id;
+  userData.roll = payload?.roll;
   userData.password = password;
   userData.email = payload?.email;
   userData.role = UserRole?.STUDENT;
   userData.needsPasswordChange = false;
-  userData.clientInfo = clientInfoData ;
+  userData.clientInfo = clientInfoData;
 
-  const isUser = await User.isUserExist(payload?.id);
+  const isUser = await User.isUserExist(payload?.roll);
 
   if (isUser) {
     throw new AppError(400, "Student is Exist. Please create new student!");
@@ -34,7 +40,14 @@ const createStudentIntoDB = async (password: string, payload: TStudent,  clientI
   try {
     session.startTransaction();
 
-    // ========> TODO:  file and cloudinary <==========
+    if (file) {
+      const imageName = `${userData.roll}${payload?.fullName}`;
+      const path = file?.path;
+
+      //send image to cloudinary
+      const { secure_url }: any = await sendImageToCloudinary(imageName, path);
+      payload.image = secure_url as string;
+    }
 
     // create a user (transaction-1)
     const newUser = await User.create([userData], { session });
@@ -43,7 +56,7 @@ const createStudentIntoDB = async (password: string, payload: TStudent,  clientI
       throw new AppError(StatusCodes.BAD_REQUEST, "Failed to create user");
     }
 
-    payload.id = newUser[0].id;
+    payload.roll = newUser[0].roll;
     payload.user = newUser[0]._id; //reference _id
 
     // create a student (transaction-2)
@@ -70,7 +83,28 @@ const createAdminIntoDB = async () => {};
 
 const getAllUser = async () => {};
 
-const myProfile = async () => {};
+const getMe = async (email: string, roll: string, role: string) => {
+  let result = null;
+  if (role === "student") {
+    result = await Student.findOne({ roll }).populate("user");
+  }
+  if (role === "superAdmin") {
+    result = await User.findOne({ email });
+  }
+
+  return result;
+};
+
+const changeStatus = async (roll: string, payload: { status: string }) => {
+
+  console.log(roll, payload)
+
+
+  const result = await User.findOneAndUpdate({roll}, payload, {
+    new: true,
+  });
+  return result;
+};
 
 const updateProfile = async () => {};
 
@@ -81,7 +115,8 @@ export const userService = {
   createInstructorIntoDB,
   createAdminIntoDB,
   getAllUser,
-  myProfile,
+  getMe,
   updateProfile,
   updateUserStatus,
+  changeStatus
 };

@@ -7,7 +7,7 @@ import config from "../../config";
 
 const userSchema = new Schema<TUser, UserModel>(
   {
-    id: {
+    roll: {
       type: String,
       required: true,
       unique: true,
@@ -42,7 +42,7 @@ const userSchema = new Schema<TUser, UserModel>(
     status: {
       type: String,
       enum: [...UserStatus],
-      default: "in-progress",
+      default: "pending",
     },
     isDeleted: {
       type: Boolean,
@@ -105,7 +105,7 @@ userSchema.statics.isUserExist = async function (value: string) {
   if (value.includes("@")) {
     query = { email: value };
   } else if (/^\d+$/.test(value)) {
-    query = { id: value };
+    query = { roll: value };
   } else {
     throw new Error("Invalid roll or email");
   }
@@ -116,17 +116,17 @@ userSchema.statics.isPasswordMatched = async function (
   plainTextPassword: string,
   hashedPassword: string
 ) {
+
   return await bcrypt.compare(plainTextPassword, hashedPassword);
 };
 
 userSchema.statics.isJWTIssuedBeforePasswordChanged = function (
   passwordChangedTimestamp: Date,
-  jwtIssuedTimestamp: number,
+  jwtIssuedTimestamp: number
 ) {
   const passwordChangedTime =
     new Date(passwordChangedTimestamp).getTime() / 1000;
   return passwordChangedTime > jwtIssuedTimestamp;
 };
-
 
 export const User = model<TUser, UserModel>("User", userSchema);

@@ -1,3 +1,3 @@
 
 
-export const UserStatus = ['in-progress', 'blocked'];
+export const UserStatus = ['pending', 'approved'];

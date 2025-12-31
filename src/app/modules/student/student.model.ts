@@ -1,134 +1,75 @@
 import { Schema, model, Types } from "mongoose";
-import { TGuardian, TSecondarySchool, TStudent } from "./student.interface";
-import { semester, technology } from "./student.constaint";
-
-/* ======================
-   Sub Schemas
-====================== */
-
-// Guardian Schema
-const guardianSchema = new Schema<TGuardian>(
-  {
-    fatherName: { type: String, required: true },
-    fatherOccupation: { type: String, required: true },
-    fatherContactNo: { type: String, required: true },
-    motherName: { type: String, required: true },
-    motherOccupation: { type: String, required: true },
-    motherContactNo: { type: String, required: true },
-  },
-  { _id: false }
-);
-
-// Secondary School Schema
-const secondarySchoolSchema = new Schema<TSecondarySchool>(
-  {
-    sscRoll: { type: Number, required: true },
-    sscRegistrationNo: { type: Number, required: true },
-    sscBoard: { type: String, required: true },
-    sscGroup: {
-      type: String,
-      enum: ["Science", "Business Studies", "Humanities"],
-      required: true,
-    },
-    sscGPA: { type: Number, required: true },
-    sscSchoolName: { type: String, required: true },
-  },
-  { _id: false }
-);
-
-/* ======================
-   Main Student Schema
-====================== */
+import { TStudent } from "./student.interface";
 
 const studentSchema = new Schema<TStudent>(
   {
-    id: { type: String, required: true, unique: true },
-
-    user: {
-      type: Types.ObjectId,
-      ref: "User",
-      required: true,
-      unique: true,
-    },
-
     fullName: {
       type: String,
       required: true,
       trim: true,
     },
 
-    gender: {
-      type: String,
-      enum: ["Male", "Female", "Other"],
-      required: true,
+    user: {
+      type: Schema.Types.ObjectId,
+      required: [true, "User id is required"],
+      ref: "User",
     },
 
-    dateOfBirth: { type: String },
-
-    email: {
+    roll: {
       type: String,
       required: true,
       unique: true,
+    },
+    registration: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+    department: {
+      type: String,
+      required: true,
+      enum: ["CST", "EEE", "Civil", "Mechanical"],
+    },
+    session: {
+      type: String,
+      required: true,
+      match: /^\d{4}-\d{4}$/,
+    },
+    shift: {
+      type: String,
+      required: true,
+      enum: ["1st", "2nd"],
+    },
+    semester: {
+      type: String,
+      required: true,
+      enum: ["1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th"],
+    },
+    email: {
+      type: String,
+      required: true,
       lowercase: true,
+      unique: true,
+      match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
     },
-
-    contactNo: { type: String, required: true },
-    emergencyContactNo: { type: String, required: true },
-
-    bloodGroup: {
+    number: {
       type: String,
-      enum: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"],
-    },
-
-    presentAddress: { type: String, required: true },
-    permanentAddress: { type: String, required: true },
-
-    guardian: {
-      type: guardianSchema,
       required: true,
+      match: /^\+8801[3-9][0-9]{8}$/,
     },
-
-    profileImg: { type: String },
-
-    secondarySchool: {
-      type: secondarySchoolSchema,
-      required: true,
-    },
-
-    diplomaRoll: { type: Number },
-    diplomaRegistrationNo: { type: Number },
-
-    admissionSemester: {
+    image: {
       type: String,
-      enum: [...semester],
-      required: true,
-      default: "First Semester",
+      default: "",
     },
-
-    academicTechnology: {
-      type: String,
-      enum: [...technology],
-      required: true,
-    },
-
-    shift: { type: String, required: true },
-    session: { type: String, required: true },
-
-    nationality: { type: String, required: true },
-    religion: { type: String, required: true },
-
     isDeleted: {
       type: Boolean,
-      default: false,
+      required: true,
+      default: false
     },
   },
   {
     timestamps: true,
   }
 );
-
-/* ======================
-   Model Export
-====================== */
 
 export const Student = model<TStudent>("Student", studentSchema);
