@@ -14,14 +14,8 @@ app.use(express.json());
 // app.use(express.urlencoded({ extended: true }));
 
 // route
-app.use(router);
+app.use('/api/v1', router);
 
-
-
-// test
-app.get("/", (req: Request, res: Response, next: NextFunction) => {
-  res.send("Hello World!");
-});
 
 //globalError
 app.use(globalErrorHandler)
