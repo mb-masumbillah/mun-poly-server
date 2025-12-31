@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import {
-  sendImageToCloudinary,
   uploadToCloudinary,
 } from "../../utils/sendImageToCloudinary";
 import Payment from "./payment.model";
@@ -65,13 +64,11 @@ export const updatePayment = async (req: Request, res: Response) => {
     let payload = { ...updateData };
 
     const file = req.file;
-    if (file) {
-      const imageName = `${payload.roll}_${payload.fullName}`;
-      const path = file.path;
-
-      const { secure_url }: any = await sendImageToCloudinary(imageName, path);
+      if (file) {
+      const { secure_url }: any = await uploadToCloudinary(`${payload.roll}-${payload.fullName}`, file.buffer);
       payload.image = secure_url;
     }
+
 
     const updatedPayment = await Payment.findOneAndUpdate({ roll }, payload, {
       new: true,
